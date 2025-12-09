@@ -1,0 +1,2 @@
+# vibevault
+A music journal

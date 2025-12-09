@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="card">
+  <div class="vault-head">
+    <div>
+      <h2>Mood Map</h2>
+      <div class="muted small">A quick read of your emotional playlist ecosystem.</div>
+    </div>
+    <div class="vault-head-actions">
+      <a class="btn tiny ghost" href="{{ url_for('main.search') }}">Add a new vibe</a>
+      <a class="btn tiny ghost" href="{{ url_for('main.vault') }}">Back to Vault</a>
+    </div>
+  </div>
+
+  {% if total == 0 %}
+    <p class="muted">No data yet. Your future mood graph is waiting.</p>
+  {% else %}
+    <div class="memory-recap">
+      <div class="recap-box">
+        <div class="recap-label">Total saves</div>
+        <div class="recap-value">{{ total }}</div>
+        <div class="recap-sub muted small">across all moods</div>
+      </div>
+      <div class="recap-box">
+        <div class="recap-label">Your main character mood</div>
+        <div class="recap-value">{{ top_mood }}</div>
+        <div class="recap-sub muted small">based on your vault</div>
+      </div>
+      <div class="recap-box recap-action">
+        <div class="recap-label">Quick jump</div>
+        <a class="btn tiny primary" href="{{ url_for('main.vault', mood=top_mood) }}">Open it</a>
+        <div class="recap-sub muted small">straight to your top mood</div>
+      </div>
+    </div>
+  {% endif %}
+</section>
+
+{% if total > 0 %}
+<section class="mood-map-grid">
+  {% for m in moods %}
+    <div class="mood-map-card">
+      <div class="mood-map-head">
+        <span class="mini-mood">{{ m }}</span>
+        <span class="mood-count">{{ counts[m] }}</span>
+      </div>
+
+      <div class="muted small">
+        {% if counts[m] == 0 %}
+          Empty for now. A blank chapter.
+        {% elif counts[m] == 1 %}
+          One solid entry.
+        {% else %}
+          A growing little universe.
+        {% endif %}
+      </div>
+
+      {% set last = latest_by_mood[m] %}
+      {% if last %}
+        <div class="mood-latest">
+          <div class="mood-latest-art">
+            {% if last.artwork_url %}
+              <img src="{{ last.artwork_url }}" alt="Artwork">
+            {% else %}
+              <div class="art-placeholder tiny"></div>
+            {% endif %}
+          </div>
+          <div class="mood-latest-text">
+            <div class="song-title">{{ last.title }}</div>
+            {% if last.artist %}
+              <div class="song-artist">{{ last.artist }}</div>
+            {% endif %}
+          </div>
+        </div>
+      {% endif %}
+
+      <div class="actions">
+        <a class="btn tiny ghost" href="{{ url_for('main.vault', mood=m) }}">Open mood</a>
+        <a class="btn tiny ghost" href="{{ url_for('main.search') }}">Add more</a>
+      </div>
+    </div>
+  {% endfor %}
+</section>
+{% endif %}
+{% endblock %}

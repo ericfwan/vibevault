@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="card">
+  <div class="vault-head">
+    <div>
+      <h2>Your Vault</h2>
+      {% if selected_mood %}
+        <div class="muted small">Currently vibing in: {{ selected_mood }}</div>
+      {% endif %}
+    </div>
+    <div class="vault-head-actions">
+      <a class="btn tiny ghost" href="{{ url_for('main.search') }}">Add a song</a>
+      {% if selected_mood or query %}
+        <a class="btn tiny ghost" href="{{ url_for('main.vault') }}">Reset view</a>
+      {% endif %}
+    </div>
+  </div>
+
+  <form class="vault-search" method="GET" action="{{ url_for('main.vault') }}">
+    {% if selected_mood %}
+      <input type="hidden" name="mood" value="{{ selected_mood }}">
+    {% endif %}
+    <input type="text" name="q" placeholder="Find something you saved" value="{{ query or '' }}">
+    <button class="btn tiny primary" type="submit">Search</button>
+  </form>
+
+  <div class="mood-filter">
+    <a class="pill {% if not selected_mood %}active{% endif %}" href="{{ url_for('main.vault', q=query) }}">All</a>
+    {% for m in moods %}
+      <a class="pill {% if selected_mood == m %}active{% endif %}" href="{{ url_for('main.vault', mood=m, q=query) }}">{{ m }}</a>
+    {% endfor %}
+  </div>
+
+  {% set has_any = false %}
+  {% for m in moods %}
+    {% if grouped.get(m) %}
+      {% set has_any = true %}
+    {% endif %}
+  {% endfor %}
+
+  {% if not has_any %}
+    {% if query %}
+      <p class="muted">Nothing matched that search. Try a different word or your past self was less poetic.</p>
+    {% else %}
+      <div class="actions">
+        <a class="btn tiny ghost" href="{{ url_for('main.search') }}">Go hunting</a>
+      </div>
+    {% endif %}
+  {% endif %}
+</section>
+
+<section class="mood-groups">
+  {% if selected_mood %}
+    <div class="mood-block">
+      <h3 class="mood-title">{{ selected_mood }}</h3>
+
+      {% if not grouped.get(selected_mood) %}
+        <div class="muted small">Nothing here yet. Drop a track and claim the territory.</div>
+      {% else %}
+        <ul class="song-list">
+          {% for s in grouped[selected_mood] %}
+            <li class="song-item {% if highlight_id and highlight_id|int == s.id %}highlight{% endif %}"
+                data-preview-url="{{ s.preview_url or '' }}">
+              <div class="song-left">
+                {% if s.artwork_url %}
+                  <img class="song-art" src="{{ s.artwork_url }}" alt="Artwork">
+                {% else %}
+                  <div class="art-placeholder tiny"></div>
+                {% endif %}
+              </div>
+              <div class="song-center">
+                <div class="song-title">{{ s.title }}</div>
+                {% if s.artist %}
+                  <div class="song-artist">{{ s.artist }}</div>
+                {% endif %}
+                {% if s.note %}
+                  <div class="song-note">{{ s.note }}</div>
+                {% else %}
+                  <div class="song-note muted">No note. Still valid.</div>
+                {% endif %}
+              </div>
+              <div class="song-right">
+                {% if s.preview_url %}
+                  <button class="btn tiny" type="button" data-audio-toggle>Play</button>
+                {% endif %}
+                <form class="inline-form" method="POST" action="{{ url_for('main.delete_song', song_id=s.id) }}">
+                  <input type="hidden" name="next" value="{{ request.full_path }}">
+                  <button class="btn tiny ghost danger" type="submit">Remove</button>
+                </form>
+              </div>
+            </li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    </div>
+  {% else %}
+    {% for mood in moods %}
+      <div class="mood-block">
+        <div class="mood-block-head">
+          <h3 class="mood-title">{{ mood }}</h3>
+          <a class="btn tiny ghost" href="{{ url_for('main.vault', mood=mood) }}">Open</a>
+        </div>
+
+        {% if not grouped.get(mood) %}
+        {% else %}
+          <ul class="song-list">
+            {% for s in grouped[mood] %}
+              <li class="song-item {% if highlight_id and highlight_id|int == s.id %}highlight{% endif %}"
+                  data-preview-url="{{ s.preview_url or '' }}">
+                <div class="song-left">
+                  {% if s.artwork_url %}
+                    <img class="song-art" src="{{ s.artwork_url }}" alt="Artwork">
+                  {% else %}
+                    <div class="art-placeholder tiny"></div>
+                  {% endif %}
+                </div>
+                <div class="song-center">
+                  <div class="song-title">{{ s.title }}</div>
+                  {% if s.artist %}
+                    <div class="song-artist">{{ s.artist }}</div>
+                  {% endif %}
+                  {% if s.note %}
+                    <div class="song-note">{{ s.note }}</div>
+                  {% else %}
+                    <div class="song-note muted">No note. Just vibes.</div>
+                  {% endif %}
+                </div>
+                <div class="song-right">
+                  {% if s.preview_url %}
+                    <button class="btn tiny" type="button" data-audio-toggle>Play</button>
+                  {% endif %}
+                </div>
+              </li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+      </div>
+    {% endfor %}
+  {% endif %}
+</section>
+{% endblock %}

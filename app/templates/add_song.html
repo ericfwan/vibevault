@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="card">
+  <h2>Add to Vault</h2>
+
+  <div class="track-preview-block" data-preview-url="{{ track.preview_url or '' }}">
+    <div class="track-art">
+      {% if track.artwork_url %}
+        <img src="{{ track.artwork_url }}" alt="Artwork">
+      {% else %}
+        <div class="art-placeholder large"></div>
+      {% endif %}
+    </div>
+    <div class="track-info">
+      <div class="result-title">{{ track.title or "Untitled" }}</div>
+      <div class="result-artist">{{ track.artist }}</div>
+      {% if track.album %}
+        <div class="result-album">{{ track.album }}</div>
+      {% endif %}
+
+      {% if track.preview_url %}
+        <div class="result-actions">
+          <button class="btn tiny" type="button" data-audio-toggle>Play</button>
+        </div>
+      {% else %}
+        <div class="muted small">No preview available for this track.</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <form class="form" method="POST" action="{{ url_for('main.add_song') }}">
+    <input type="hidden" name="track_id" value="{{ track.track_id }}">
+    <input type="hidden" name="title" value="{{ track.title }}">
+    <input type="hidden" name="artist" value="{{ track.artist }}">
+    <input type="hidden" name="album" value="{{ track.album }}">
+    <input type="hidden" name="artwork_url" value="{{ track.artwork_url }}">
+    <input type="hidden" name="preview_url" value="{{ track.preview_url }}">
+
+    <label>
+      <span>Mood</span>
+      <select name="mood" required>
+        <option value="">Pick a mood</option>
+        {% for m in moods %}
+          <option value="{{ m }}">{{ m }}</option>
+        {% endfor %}
+      </select>
+    </label>
+
+    <label>
+      <span>Note (optional)</span>
+      <textarea name="note" rows="4" placeholder="A quick memory, a reason, a feeling. Or nothing."></textarea>
+    </label>
+
+    <div class="actions">
+      <button class="btn primary" type="submit">Save to Vault</button>
+      <a class="btn ghost" href="{{ url_for('main.search') }}">Back to Search</a>
+    </div>
+  </form>
+</section>
+{% endblock %}

@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="card hero">
+  <div class="hero-badge">Your Personal Music Journal</div>
+  <h1>Hey Welcome back!</h1>
+  <p class="hero-sub">You ready to add to your vault?</p>
+  <div class="actions">
+    <a class="btn primary" href="{{ url_for('main.search') }}">Start Searching</a>
+    <a class="btn ghost" href="{{ url_for('main.vault') }}">Open Vault</a>
+  </div>
+</section>
+
+<section class="home-cards">
+  <div class="feature-card live-card">
+    <h3>Quick previews</h3>
+
+    {% if latest_songs and latest_songs|length > 0 %}
+      <ul class="mini-list">
+        {% for s in latest_songs %}
+          <li class="mini-item" data-preview-url="{{ s.preview_url or '' }}">
+            <div class="mini-art">
+              {% if s.artwork_url %}
+                <img src="{{ s.artwork_url }}" alt="Artwork">
+              {% else %}
+                <div class="art-placeholder tiny"></div>
+              {% endif %}
+            </div>
+
+            <div class="mini-content">
+              <div class="mini-main">
+                <span class="mini-title">{{ s.title }}</span>
+                {% if s.artist %}<span class="mini-artist">· {{ s.artist }}</span>{% endif %}
+              </div>
+
+              <div class="mini-meta">
+                <span class="mini-mood">{{ s.mood }}</span>
+                {% if s.note %}
+                  <span class="mini-note">{{ s.note }}</span>
+                {% else %}
+                  <span class="mini-note muted">No note</span>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="mini-actions">
+              {% if s.preview_url %}
+                <button class="btn tiny" type="button" data-audio-toggle>Play</button>
+              {% endif %}
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+
+      <div class="actions">
+        <a class="btn tiny ghost" href="{{ url_for('main.vault') }}">View all</a>
+      </div>
+    {% else %}
+      <p class="muted">Nothing saved yet.</p>
+      <div class="actions">
+        <a class="btn tiny ghost" href="{{ url_for('main.search') }}">Start searching</a>
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="feature-card action-card">
+    <h3>Mood vaults</h3>
+    <p class="muted">Revisit a vibe.</p>
+
+    <form class="mood-picker" method="GET" action="{{ url_for('main.vault') }}">
+      <select name="mood" required>
+        <option value="">Pick a mood</option>
+        {% for m in moods %}
+          <option value="{{ m }}">{{ m }}</option>
+        {% endfor %}
+      </select>
+      <button class="btn tiny primary" type="submit">Open mood</button>
+    </form>
+  </div>
+</section>
+{% endblock %}

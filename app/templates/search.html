@@ -1,59 +1,59 @@
 {% extends "base.html" %}
 {% block content %}
+
 <section class="card">
-  <h2>Search</h2>
+  <div class="vault-head">
+    <div>
+      <h2>Search</h2>
+      <div class="muted small">Find a track, then save the mood you were in.</div>
+    </div>
+  </div>
+
   <form class="search-bar" method="GET" action="{{ url_for('main.search') }}">
-    <input type="text" name="q" placeholder="Search by song or artist" value="{{ query }}">
-    <button class="btn primary" type="submit">Search</button>
+    <input type="text" name="q" placeholder="Song, artist, or a late-night impulse" value="{{ query or '' }}">
+    <button class="btn tiny primary" type="submit">Search</button>
   </form>
 
-  {% if query and not results %}
-    <p class="muted">No results.</p>
+  {% if query and results|length == 0 %}
+    <div class="muted tiny-space">No matches.</div>
   {% endif %}
 </section>
 
-{% if results %}
-<section class="results">
+{% if results and results|length > 0 %}
+<section class="search-results">
   {% for r in results %}
     <div class="result-card" data-preview-url="{{ r.previewUrl or '' }}">
-      <div class="result-art">
+      <div class="result-left">
         {% if r.artworkUrl100 %}
-          <img src="{{ r.artworkUrl100 }}" alt="Artwork">
+          <img class="song-art" src="{{ r.artworkUrl100 }}" alt="Artwork">
         {% else %}
           <div class="art-placeholder"></div>
         {% endif %}
       </div>
-
-      <div class="result-meta">
-        <div class="result-title">{{ r.trackName }}</div>
-        <div class="result-artist">{{ r.artistName }}</div>
+      <div class="result-center">
+        <div class="song-title">{{ r.trackName }}</div>
+        <div class="song-artist">{{ r.artistName }}</div>
         {% if r.collectionName %}
-          <div class="result-album">{{ r.collectionName }}</div>
-        {% endif %}
-
-        {% if r.previewUrl %}
-          <div class="result-actions">
-            <button class="btn tiny" type="button" data-audio-toggle>Play</button>
-          </div>
-        {% else %}
-          <div class="muted small">No preview available for this track.</div>
+          <div class="muted small">{{ r.collectionName }}</div>
         {% endif %}
       </div>
-
-      <div class="result-add">
-        <a class="btn ghost"
-           href="{{ url_for('main.add_song',
-                            track_id=r.trackId,
-                            title=r.trackName,
-                            artist=r.artistName,
-                            album=r.collectionName,
-                            artwork_url=r.artworkUrl100,
-                            preview_url=r.previewUrl) }}">
-          Add to Vault
-        </a>
+      <div class="result-right">
+        {% if r.previewUrl %}
+          <button class="btn tiny" type="button" data-audio-toggle>Play</button>
+        {% endif %}
+        <form method="GET" action="{{ url_for('main.add_song') }}">
+          <input type="hidden" name="track_id" value="{{ r.trackId }}">
+          <input type="hidden" name="title" value="{{ r.trackName }}">
+          <input type="hidden" name="artist" value="{{ r.artistName }}">
+          <input type="hidden" name="album" value="{{ r.collectionName }}">
+          <input type="hidden" name="artwork_url" value="{{ r.artworkUrl100 }}">
+          <input type="hidden" name="preview_url" value="{{ r.previewUrl }}">
+          <button class="btn tiny ghost" type="submit">Save this vibe</button>
+        </form>
       </div>
     </div>
   {% endfor %}
 </section>
 {% endif %}
+
 {% endblock %}

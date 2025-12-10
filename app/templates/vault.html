@@ -1,11 +1,12 @@
 {% extends "base.html" %}
 {% block content %}
+
 <section class="card">
   <div class="vault-head">
     <div>
       <h2>Your Vault</h2>
       {% if selected_mood %}
-        <div class="muted small">Currently vibing in: {{ selected_mood }}</div>
+        <div class="muted small">{{ selected_mood }}</div>
       {% endif %}
     </div>
     <div class="vault-head-actions">
@@ -30,35 +31,27 @@
       <a class="pill {% if selected_mood == m %}active{% endif %}" href="{{ url_for('main.vault', mood=m, q=query) }}">{{ m }}</a>
     {% endfor %}
   </div>
-
-  {% set has_any = false %}
-  {% for m in moods %}
-    {% if grouped.get(m) %}
-      {% set has_any = true %}
-    {% endif %}
-  {% endfor %}
-
-  {% if not has_any %}
-    {% if query %}
-      <p class="muted">Nothing matched that search. Try a different word or your past self was less poetic.</p>
-    {% else %}
-      <div class="actions">
-        <a class="btn tiny ghost" href="{{ url_for('main.search') }}">Go hunting</a>
-      </div>
-    {% endif %}
-  {% endif %}
 </section>
 
 <section class="mood-groups">
   {% if selected_mood %}
+    {% set list_for = grouped.get(selected_mood, []) %}
     <div class="mood-block">
-      <h3 class="mood-title">{{ selected_mood }}</h3>
+      <div class="mood-block-head">
+        <h3 class="mood-title">{{ selected_mood }} <span class="count-badge">{{ list_for|length }}</span></h3>
+      </div>
 
-      {% if not grouped.get(selected_mood) %}
-        <div class="muted small">Nothing here yet. Drop a track and claim the territory.</div>
+      {% if list_for|length == 0 %}
+        <div class="ghost-row small">
+          <div class="ghost-art"></div>
+          <div class="ghost-lines">
+            <div class="ghost-line wide"></div>
+            <div class="ghost-line"></div>
+          </div>
+        </div>
       {% else %}
         <ul class="song-list">
-          {% for s in grouped[selected_mood] %}
+          {% for s in list_for %}
             <li class="song-item {% if highlight_id and highlight_id|int == s.id %}highlight{% endif %}"
                 data-preview-url="{{ s.preview_url or '' }}">
               <div class="song-left">
@@ -75,8 +68,6 @@
                 {% endif %}
                 {% if s.note %}
                   <div class="song-note">{{ s.note }}</div>
-                {% else %}
-                  <div class="song-note muted">No note. Still valid.</div>
                 {% endif %}
               </div>
               <div class="song-right">
@@ -95,16 +86,24 @@
     </div>
   {% else %}
     {% for mood in moods %}
+      {% set list_for = grouped.get(mood, []) %}
       <div class="mood-block">
         <div class="mood-block-head">
-          <h3 class="mood-title">{{ mood }}</h3>
+          <h3 class="mood-title">{{ mood }} <span class="count-badge">{{ list_for|length }}</span></h3>
           <a class="btn tiny ghost" href="{{ url_for('main.vault', mood=mood) }}">Open</a>
         </div>
 
-        {% if not grouped.get(mood) %}
+        {% if list_for|length == 0 %}
+          <div class="ghost-row small">
+            <div class="ghost-art"></div>
+            <div class="ghost-lines">
+              <div class="ghost-line wide"></div>
+              <div class="ghost-line"></div>
+            </div>
+          </div>
         {% else %}
           <ul class="song-list">
-            {% for s in grouped[mood] %}
+            {% for s in list_for %}
               <li class="song-item {% if highlight_id and highlight_id|int == s.id %}highlight{% endif %}"
                   data-preview-url="{{ s.preview_url or '' }}">
                 <div class="song-left">
@@ -121,14 +120,16 @@
                   {% endif %}
                   {% if s.note %}
                     <div class="song-note">{{ s.note }}</div>
-                  {% else %}
-                    <div class="song-note muted">No note. Just vibes.</div>
                   {% endif %}
                 </div>
                 <div class="song-right">
                   {% if s.preview_url %}
                     <button class="btn tiny" type="button" data-audio-toggle>Play</button>
                   {% endif %}
+                  <form class="inline-form" method="POST" action="{{ url_for('main.delete_song', song_id=s.id) }}">
+                    <input type="hidden" name="next" value="{{ request.full_path }}">
+                    <button class="btn tiny ghost danger" type="submit">Remove</button>
+                  </form>
                 </div>
               </li>
             {% endfor %}
@@ -138,4 +139,5 @@
     {% endfor %}
   {% endif %}
 </section>
+
 {% endblock %}

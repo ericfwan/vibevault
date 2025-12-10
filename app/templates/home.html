@@ -5,13 +5,58 @@
   <div class="home-hero">
     <h2>VibeVault</h2>
     <div class="muted small">Your private music journal, sorted by mood.</div>
-    <div class="actions">
-      <a class="btn tiny primary" href="{{ url_for('main.search') }}">Find a song</a>
-      <a class="btn tiny ghost" href="{{ url_for('main.vault') }}">Open Vault</a>
-      <a class="btn tiny ghost" href="{{ url_for('main.mood_map') }}">Mood Map</a>
-    </div>
   </div>
+
+  <form class="search-bar" method="GET" action="{{ url_for('main.home') }}">
+    <input type="text" name="q" placeholder="Search a song or artist" value="{{ query or '' }}">
+    <button class="btn tiny primary" type="submit">Search</button>
+  </form>
 </section>
+
+{% if query %}
+  <section class="card">
+    <div class="section-head">
+      <h3>Results <span class="count-badge">{{ results|length }}</span></h3>
+    </div>
+
+    {% if results and results|length > 0 %}
+      <section class="search-results">
+        {% for r in results %}
+          <div class="result-card" data-preview-url="{{ r.previewUrl or '' }}">
+            <div class="result-left">
+              {% if r.artworkUrl100 %}
+                <img class="song-art" src="{{ r.artworkUrl100|replace('100x100bb','600x600bb')|replace('100x100','600x600') }}" alt="Artwork">
+              {% else %}
+                <div class="art-placeholder"></div>
+              {% endif %}
+            </div>
+            <div class="result-center">
+              <div class="song-title">{{ r.trackName }}</div>
+              <div class="song-artist">{{ r.artistName }}</div>
+              {% if r.collectionName %}
+                <div class="muted small">{{ r.collectionName }}</div>
+              {% endif %}
+            </div>
+            <div class="result-right">
+              {% if r.previewUrl %}
+                <button class="btn tiny" type="button" data-audio-toggle>Play</button>
+              {% endif %}
+              <form method="GET" action="{{ url_for('main.add_song') }}">
+                <input type="hidden" name="track_id" value="{{ r.trackId }}">
+                <input type="hidden" name="title" value="{{ r.trackName }}">
+                <input type="hidden" name="artist" value="{{ r.artistName }}">
+                <input type="hidden" name="album" value="{{ r.collectionName }}">
+                <input type="hidden" name="artwork_url" value="{{ r.artworkUrl100 }}">
+                <input type="hidden" name="preview_url" value="{{ r.previewUrl }}">
+                <button class="btn tiny ghost" type="submit">Save this vibe</button>
+              </form>
+            </div>
+          </div>
+        {% endfor %}
+      </section>
+    {% endif %}
+  </section>
+{% endif %}
 
 <section class="card">
   <div class="section-head">
@@ -19,27 +64,29 @@
   </div>
 
   {% if latest_songs and latest_songs|length > 0 %}
-    <ul class="mini-list">
+    <ul class="quick-strip">
       {% for s in latest_songs %}
-        <li class="mini-item" data-preview-url="{{ s.preview_url or '' }}">
-          <div class="mini-art">
+        <li class="quick-item" data-preview-url="{{ s.preview_url or '' }}">
+          <div class="quick-art">
             {% if s.artwork_url %}
-              <img src="{{ s.artwork_url }}" alt="Artwork">
+              <img src="{{ s.artwork_url|replace('100x100bb','600x600bb')|replace('100x100','600x600') }}" alt="Artwork">
             {% else %}
-              <div class="art-placeholder tiny"></div>
+              <div class="art-placeholder"></div>
             {% endif %}
           </div>
-          <div class="mini-content">
+
+          <div class="quick-meta">
             <div class="song-title">{{ s.title }}</div>
             {% if s.artist %}
               <div class="song-artist">{{ s.artist }}</div>
             {% endif %}
-            <span class="mini-mood">{{ s.mood }}</span>
+            <div class="quick-pill">{{ s.mood }}</div>
             {% if s.note %}
               <div class="song-note">{{ s.note }}</div>
             {% endif %}
           </div>
-          <div class="mini-actions">
+
+          <div class="quick-actions">
             {% if s.preview_url %}
               <button class="btn tiny" type="button" data-audio-toggle>Play</button>
             {% endif %}
@@ -48,19 +95,10 @@
       {% endfor %}
     </ul>
   {% else %}
-    <div class="ghost-row">
-      <div class="ghost-art"></div>
-      <div class="ghost-lines">
-        <div class="ghost-line wide"></div>
-        <div class="ghost-line"></div>
-      </div>
-    </div>
-    <div class="ghost-row">
-      <div class="ghost-art"></div>
-      <div class="ghost-lines">
-        <div class="ghost-line wide"></div>
-        <div class="ghost-line"></div>
-      </div>
+    <div class="quick-ghost">
+      <div class="ghost-art big"></div>
+      <div class="ghost-art big"></div>
+      <div class="ghost-art big"></div>
     </div>
   {% endif %}
 </section>

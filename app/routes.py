@@ -4,6 +4,34 @@ import requests
 from datetime import datetime, timedelta
 import random
 
+from sqlalchemy import func
+
+def find_duplicate(track_id, title, artist, mood=None):
+    """
+    Returns an existing Song if this looks like a duplicate.
+    Preference order:
+    1) Match by track_id if provided.
+    2) Fallback to case-insensitive title + artist match.
+    Mood is optional. If provided, we still treat duplicates as duplicates
+    across the whole vault, not just within the same mood.
+    """
+
+    q = Song.query
+
+    if track_id:
+        existing = q.filter(Song.track_id == track_id).first()
+        if existing:
+            return existing
+
+    if title and artist:
+        existing = q.filter(
+            func.lower(Song.title) == title.lower(),
+            func.lower(Song.artist) == artist.lower()
+        ).first()
+        if existing:
+            return existing
+
+    return None
 main_bp = Blueprint("main", __name__)
 
 MOODS = [
@@ -43,27 +71,36 @@ def itunes_search(term, limit=20):
     except Exception:
         return []
 
+
 @main_bp.route("/")
 def home():
-    latest = Song.query.order_by(Song.created_at.desc()).limit(3).all()
-    return render_template("home.html", latest_songs=latest, moods=MOODS)
+    query = request.args.get("q", "").strip()
+    results = []
+    if query:
+        try:
+            results = itunes_search(query, limit=12)
+        except Exception:
+            results = []
+
+    latest_songs = (
+        Song.query.order_by(Song.created_at.desc()).limit(6).all()
+        if hasattr(Song, "created_at")
+        else Song.query.order_by(Song.id.desc()).limit(6).all()
+    )
+
+    return render_template(
+        "home.html",
+        latest_songs=latest_songs,
+        moods=MOODS,
+        results=results,
+        query=query,
+    )
+
 
 @main_bp.route("/search")
 def search():
     q = request.args.get("q", "").strip()
-    results = itunes_search(q) if q else []
-    return render_template("search.html", query=q, results=results)
-
-def find_duplicate(track_id, title, artist, mood):
-    if track_id:
-        return Song.query.filter_by(track_id=track_id, mood=mood).first()
-    if title and artist and mood:
-        return Song.query.filter(
-            Song.title.ilike(title),
-            Song.artist.ilike(artist),
-            Song.mood == mood
-        ).first()
-    return None
+    return redirect(url_for("main.home", q=q))
 
 @main_bp.route("/add", methods=["GET", "POST"])
 def add_song():
@@ -202,3 +239,19 @@ def delete_song(song_id):
     if next_url:
         return redirect(next_url)
     return redirect(url_for("main.vault", mood=mood))
+
+
+@main_bp.route("/about")
+def about():
+    return render_template("about.html")
+
+
+@main_bp.route("/songs/<int:song_id>/note", methods=["POST"])
+def update_note(song_id):
+    song = Song.query.get_or_404(song_id)
+    note = request.form.get("note", "").strip()
+    song.note = note
+    db.session.commit()
+
+    next_url = request.form.get("next") or url_for("main.vault")
+    return redirect(next_url)

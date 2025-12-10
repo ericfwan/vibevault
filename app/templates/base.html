@@ -13,9 +13,9 @@
         <img src="{{ url_for('static', filename='vibe.png') }}" alt="VibeVault logo">
       </a>
       <nav class="nav center-nav">
-        <a href="{{ url_for('main.search') }}">Search</a>
         <a href="{{ url_for('main.vault') }}">Vault</a>
         <a href="{{ url_for('main.mood_map') }}">Mood Map</a>
+        <a href="{{ url_for('main.about') }}">About</a>
       </nav>
     </div>
   </header>
@@ -39,5 +39,11 @@
   </footer>
 
   <script src="{{ url_for('static', filename='app.js') }}"></script>
+
+  <footer class="site-footer">
+    <div class="fine-print">Copyright © 2025 VibeVault Inc. All rights reserved.</div>
+  </footer>
+
+  <script src="{{ url_for('static', filename='menu.js') }}"></script>
 </body>
 </html>

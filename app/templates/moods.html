@@ -49,7 +49,7 @@
         <div class="mood-latest">
           <div class="mood-latest-art">
             {% if last.artwork_url %}
-              <img src="{{ last.artwork_url }}" alt="Artwork">
+              <img src="{{ last.artwork_url |replace('100x100bb','600x600bb')|replace('100x100','600x600') }}" alt="Artwork">
             {% else %}
               <div class="art-placeholder tiny"></div>
             {% endif %}

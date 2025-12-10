@@ -7,12 +7,13 @@
       <h2>Your Vault</h2>
       {% if selected_mood %}
         <div class="muted small">{{ selected_mood }}</div>
+      {% else %}
+        <div class="muted small">Mood overview</div>
       {% endif %}
     </div>
     <div class="vault-head-actions">
-      <a class="btn tiny ghost" href="{{ url_for('main.search') }}">Add a song</a>
       {% if selected_mood or query %}
-        <a class="btn tiny ghost" href="{{ url_for('main.vault') }}">Reset view</a>
+        <a class="btn tiny ghost" href="{{ url_for('main.vault') }}">Back to overview</a>
       {% endif %}
     </div>
   </div>
@@ -34,9 +35,11 @@
 </section>
 
 <section class="mood-groups">
+
   {% if selected_mood %}
     {% set list_for = grouped.get(selected_mood, []) %}
-    <div class="mood-block">
+
+    <div class="mood-block expanded">
       <div class="mood-block-head">
         <h3 class="mood-title">{{ selected_mood }} <span class="count-badge">{{ list_for|length }}</span></h3>
       </div>
@@ -56,11 +59,12 @@
                 data-preview-url="{{ s.preview_url or '' }}">
               <div class="song-left">
                 {% if s.artwork_url %}
-                  <img class="song-art" src="{{ s.artwork_url }}" alt="Artwork">
+                  <img class="song-art" src="{{ s.artwork_url|replace('100x100bb','600x600bb')|replace('100x100','600x600') }}" alt="Artwork" width="90" height="90" loading="lazy">
                 {% else %}
                   <div class="art-placeholder tiny"></div>
                 {% endif %}
               </div>
+
               <div class="song-center">
                 <div class="song-title">{{ s.title }}</div>
                 {% if s.artist %}
@@ -70,13 +74,28 @@
                   <div class="song-note">{{ s.note }}</div>
                 {% endif %}
               </div>
+
               <div class="song-right">
+                <div class="song-menu">
+                  <button class="menu-dot" type="button" aria-label="More options">•••</button>
+                  <div class="menu-dropdown">
+                    <button class="menu-item" type="button" data-edit-note data-song-id="{{ s.id }}" data-current-note="{{ s.note or '' }}">
+                      Edit note
+                    </button>
+                    <form method="POST" action="{{ url_for('main.delete_song', song_id=s.id) }}">
+                      <input type="hidden" name="next" value="{{ request.full_path }}">
+                      <button class="menu-item danger" type="submit">Delete song</button>
+                    </form>
+                  </div>
+                </div>
+
                 {% if s.preview_url %}
                   <button class="btn tiny" type="button" data-audio-toggle>Play</button>
                 {% endif %}
-                <form class="inline-form" method="POST" action="{{ url_for('main.delete_song', song_id=s.id) }}">
+
+                <form class="note-update-form" method="POST" action="{{ url_for('main.update_note', song_id=s.id) }}">
+                  <input type="hidden" name="note" value="">
                   <input type="hidden" name="next" value="{{ request.full_path }}">
-                  <button class="btn tiny ghost danger" type="submit">Remove</button>
                 </form>
               </div>
             </li>
@@ -84,51 +103,60 @@
         </ul>
       {% endif %}
     </div>
+
   {% else %}
+
     {% for mood in moods %}
       {% set list_for = grouped.get(mood, []) %}
-      <div class="mood-block">
+      <div class="mood-block overview">
         <div class="mood-block-head">
           <h3 class="mood-title">{{ mood }} <span class="count-badge">{{ list_for|length }}</span></h3>
           <a class="btn tiny ghost" href="{{ url_for('main.vault', mood=mood) }}">Open</a>
         </div>
 
         {% if list_for|length == 0 %}
-          <div class="ghost-row small">
-            <div class="ghost-art"></div>
-            <div class="ghost-lines">
-              <div class="ghost-line wide"></div>
-              <div class="ghost-line"></div>
-            </div>
-          </div>
+          <div class="overview-empty"></div>
         {% else %}
-          <ul class="song-list">
-            {% for s in list_for %}
-              <li class="song-item {% if highlight_id and highlight_id|int == s.id %}highlight{% endif %}"
-                  data-preview-url="{{ s.preview_url or '' }}">
-                <div class="song-left">
+          <ul class="mood-overview-list">
+            {% for s in list_for[:2] %}
+              <li class="mood-overview-item" data-preview-url="{{ s.preview_url or '' }}">
+                <div class="overview-art">
                   {% if s.artwork_url %}
-                    <img class="song-art" src="{{ s.artwork_url }}" alt="Artwork">
+                    <img src="{{ s.artwork_url|replace('100x100bb','600x600bb')|replace('100x100','600x600') }}" alt="Artwork">
                   {% else %}
                     <div class="art-placeholder tiny"></div>
                   {% endif %}
                 </div>
-                <div class="song-center">
+                <div class="overview-text">
                   <div class="song-title">{{ s.title }}</div>
                   {% if s.artist %}
                     <div class="song-artist">{{ s.artist }}</div>
                   {% endif %}
                   {% if s.note %}
-                    <div class="song-note">{{ s.note }}</div>
+                    <div class="song-note compact">{{ s.note }}</div>
                   {% endif %}
                 </div>
-                <div class="song-right">
+                <div class="overview-actions">
+                  <div class="song-menu">
+                    <button class="menu-dot" type="button" aria-label="More options">•••</button>
+                    <div class="menu-dropdown">
+                      <button class="menu-item" type="button" data-edit-note data-song-id="{{ s.id }}" data-current-note="{{ s.note or '' }}">
+                        Edit note
+                      </button>
+                      <form method="POST" action="{{ url_for('main.delete_song', song_id=s.id) }}">
+                        <input type="hidden" name="next" value="{{ request.full_path }}">
+                        <button class="menu-item danger" type="submit">Delete song</button>
+                      </form>
+                    </div>
+                  </div>
+
                   {% if s.preview_url %}
                     <button class="btn tiny" type="button" data-audio-toggle>Play</button>
                   {% endif %}
-                  <form class="inline-form" method="POST" action="{{ url_for('main.delete_song', song_id=s.id) }}">
+
+                  <form class="note-update-form" method="POST" action="{{ url_for('main.update_note', song_id=s.id) }}">
+                    <input type="hidden" name="note" value="">
                     <input type="hidden" name="next" value="{{ request.full_path }}">
-                    <button class="btn tiny ghost danger" type="submit">Remove</button>
                   </form>
                 </div>
               </li>
@@ -137,7 +165,9 @@
         {% endif %}
       </div>
     {% endfor %}
+
   {% endif %}
+
 </section>
 
 {% endblock %}
